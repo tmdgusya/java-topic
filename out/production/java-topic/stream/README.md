@@ -128,8 +128,41 @@ public class ByteArrayInputAndOutputStreamExample {
 
 - 문제점
   - 위의 BufferSize 만큼 남는 경우 이상한 값이 들어오게 된다. Buffer read 방식의 경우 기존의 Buffer 를 채워가며 읽는 식인데, 마지막에는 4,5,6 세개만 읽으므로
-기존에 있던 3이 남아있게 된다. 따라서 Buffer 를 어떻게 끊어야 할지 잘 고민해야 한다.
+기존에 있던 3이 남아있게 된다. 따라서 Buffer 를 어떻게 끊어야 할지 잘 고민해야 한다. 따라서 아래와 같은 방식으로 최적화가 가능하다.
 
-## BufferedReader
+```java
+    public static void main(String[] args) {
 
-- ![img_1.png](img_1.png)
+        byte[] inSrc = {0,1,2,3,4,5,6};
+
+        byte[] outSrc = null;
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(inSrc);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        System.out.println("Input Source : " + Arrays.toString(inSrc));
+
+        try {
+            while (inputStream.available() > 0) {
+
+                int bufferSize = inputStream.available();
+                System.out.println("Blocking 없이 읽어올 수 있는 Byte 수 : " + bufferSize);
+                byte[] buffer = new byte[bufferSize];
+                /**
+                 * read 에 byte[] 를 넣으면 buffer 이다.
+                 */
+                inputStream.read(buffer);
+                outputStream.write(buffer);
+                System.out.println("Buffer Pool(Before) : " + Arrays.toString(buffer));
+
+                outSrc = outputStream.toByteArray();
+                System.out.println("Buffer Pool(After) : " + Arrays.toString(buffer));
+                System.out.println("Output Source : " + Arrays.toString(outSrc));
+
+            }
+        } catch (IOException ignored) {}
+
+        System.out.println(Arrays.toString(inSrc)); // [0, 1, 2, 3, 4, 5, 6]
+        System.out.println(Arrays.toString(outSrc)); // [0, 1, 2, 3, 4, 5, 6]
+    }
+```
